@@ -4,7 +4,6 @@ import CategoriesSection from '../components/CategoriesSection'
 import LatestItems from '../components/LatestItems'
 import Footer from '../components/Footer'
 
-
 function LandingPage() {
   return (
 	<div className='flex flex-1 flex-col w-full h-screen'>

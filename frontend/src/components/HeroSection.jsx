@@ -5,16 +5,21 @@ import { Users, ShieldCheck, Zap } from "lucide-react";
 function HeroSection() {
   return (
     <div
-      className="bg-cover bg-center h-screen mt-7"
+      className="bg-cover bg-center h-screen mt-1"
       style={{ backgroundImage: `url(${students})` }}
     >
       
       <div className="flex flex-col items-center justify-center h-full bg-black/50 px-4 text-white">
-        
+        {/* Login section */}
+        <li className="mb-4">
+          <a href="/login" className="text-lg font-semibold hover:underline">
+            Login
+          </a>
+        </li>
         {/* Hero text */}
         <div className="text-center mb-12">
           <p className="text-4xl font-bold mb-4">
-            <span>AASTU </span>
+            <span className="text-black">AASTU </span>
             <span className="bg-gradient-to-r from-[#16793A] to-[#004DB3] bg-clip-text text-transparent">
               Exchange
             </span>
