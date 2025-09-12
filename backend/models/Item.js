@@ -13,7 +13,7 @@ const itemSchema = new mongoose.Schema({
     required: true,
   },
   price: { type: Number, required: true },
-  images: [{ type: String }], // array of image URLs
+  images: [{ type: String }],
   condition: { type: String, enum: ["new", "used"], required: true },
   status: {
     type: String,

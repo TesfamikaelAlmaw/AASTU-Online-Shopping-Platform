@@ -1,17 +1,17 @@
 import React from "react";
 import { Search, MessageCircle, Bell } from "lucide-react";
-
+import profle from '../assets/profile.jpg'
  function Navbar() {
   return (
     <nav className="flex items-center justify-between bg-white px-6 py-3 shadow-sm">
-      {/* Left: Logo & Title */}
+      {/* Left: user profile */}
       <div className="flex items-center gap-2">
-        <div className="bg-blue-100 p-2 rounded-lg">
-          <img src="/logo.png" alt="AASTU Logo" className="w-6 h-6" />
+        <div className="bg-blue-100 p-2 rounded-4xl">
+          <img src={profle} alt="AASTU Logo" className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-lg font-bold text-gray-900">AASTU Trade</h1>
-          <p className="text-xs text-gray-500">Student Marketplace</p>
+          <h1 className="text-lg font-bold text-gray-900">Tesfamicahel</h1>
+          <p className="text-xs text-gray-500">Software Enginnering</p>
         </div>
       </div>
 
