@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ItemsModule } from './items/items.module';
+import { CategoriesModule } from './categories/categories.module';
 
 
 
@@ -11,8 +12,9 @@ import { ItemsModule } from './items/items.module';
     MongooseModule.forRoot('mongodb://127.0.0.1:27017/aastu_shop'),
     AuthModule,
     UsersModule,
-    ItemsModule
-    
+    ItemsModule,
+    CategoriesModule
+
   ],
 })
-export class AppModule {}
+export class AppModule { }

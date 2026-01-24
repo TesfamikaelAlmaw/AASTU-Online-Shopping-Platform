@@ -14,8 +14,8 @@ export class Item {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   owner_id: Types.ObjectId;
 
-  @Prop({ required: true })
-  category: string;
+  @Prop({ type: Types.ObjectId, ref: 'Category', required: true,default:"other" })
+  category: Types.ObjectId;
 
   @Prop({ required: true })
   price: number;
