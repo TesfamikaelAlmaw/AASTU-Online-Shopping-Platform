@@ -19,6 +19,8 @@ export class UsersService {
   }
 
   async updateStatus(id: string, updateStatusDto: UpdateStatusDto): Promise<User> {
+    // TODO  for debugging
+    console.log('UpdateStatusDto:', updateStatusDto);
     const { status } = updateStatusDto;
     const user = await this.userModel.findByIdAndUpdate(
       id,

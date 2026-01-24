@@ -16,9 +16,9 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    if (!dto.email.endsWith('@aastu.edu.et')) {
-      throw new BadRequestException('Only AASTU university emails allowed');
-    }
+    // if (!dto.email.endsWith('@aastu.edu.et')) {
+    //   throw new BadRequestException('Only AASTU university emails allowed');
+    // }
 
     const existingUser = await this.userModel.findOne({ email: dto.email });
     if (existingUser) {
