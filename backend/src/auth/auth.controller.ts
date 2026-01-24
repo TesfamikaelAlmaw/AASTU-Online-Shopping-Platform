@@ -9,6 +9,8 @@ export class AuthController {
 
   @Post('register')
   register(@Body() dto: RegisterDto) {
+    // TODO : to to remove later 
+    console.log(dto);
     return this.authService.register(dto);
   }
 

@@ -2,22 +2,21 @@ import { Controller, Get, Param, Patch, Delete, Body, UseGuards } from '@nestjs/
 import { UsersService } from './users.service';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { JwtAuthGuard } from '../users/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
-
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard) 
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @Roles('admin') // Only admin can access
+  @Roles('admin') 
   getAllUsers() {
     return this.usersService.findAll();
   }
 
   @Get(':id')
-  @Roles('admin')
+  @Roles('admin', 'student')
   getUser(@Param('id') id: string) {
     return this.usersService.findById(id);
   }

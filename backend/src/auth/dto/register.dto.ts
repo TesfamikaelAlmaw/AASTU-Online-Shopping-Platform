@@ -1,6 +1,7 @@
 import {
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   MinLength,
 } from 'class-validator';
 
@@ -16,4 +17,7 @@ export class RegisterDto {
 
   @IsNotEmpty({ message: 'Department is required' })
   department: string;
+  @IsOptional()
+  role: 'student' | 'admin';
+  
 }
