@@ -1,15 +1,16 @@
 import React from 'react'
 import HeroSection from '../components/HeroSection'
-import CategoriesSection from '../components/CategoriesSection'
 import LatestItems from '../components/LatestItems'
 import Footer from '../components/Footer'
+import InfoCard from '../components/InfoCard'
+import FeaturedItems from '../components/FeaturedItems'
 
 function LandingPage() {
   return (
-	<div className='flex flex-1 flex-col w-full h-screen'>
+	<div className='flex flex-1 flex-col w-full min-h-screen'>
 <HeroSection/>
-<CategoriesSection/>
-<LatestItems/>
+<InfoCard/>
+<FeaturedItems/>
 <Footer/>
 	</div>
   )
