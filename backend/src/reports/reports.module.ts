@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ReportsController } from './reports.controller';
-import { ReportsService } from './reports.service';
+import { ReportsService } from './reports.service.js';
 import { Report, ReportSchema } from './report.entity';
 
 @Module({
