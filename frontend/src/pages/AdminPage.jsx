@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import { 
   Users, Package, Flag, BarChart3, ShieldAlert, Check, 
   X, Trash2, ShieldCheck, MoreVertical, Search, 
-  TrendingUp, ArrowUpRight, Loader2
+  TrendingUp, ArrowUpRight, Loader2, Layers, Plus, Edit
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import userService from "../services/user.service";
 import reportService from "../services/report.service";
 import itemService from "../services/item.service";
 import authService from "../services/auth.service";
+import categoryService from "../services/category.service";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
@@ -17,16 +18,25 @@ const AdminPage = () => {
   const [users, setUsers] = useState([]);
   const [reports, setReports] = useState([]);
   const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   
+  // Category Modal State
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryName, setCategoryName] = useState("");
+
   // Sorting & Pagination State
   const [userSort, setUserSort] = useState({ key: "full_name", direction: "asc" });
   const [itemSort, setItemSort] = useState({ key: "createdAt", direction: "desc" });
   const [reportSort, setReportSort] = useState({ key: "createdAt", direction: "desc" });
+  const [categorySort, setCategorySort] = useState({ key: "name", direction: "asc" });
+  
   const [userPage, setUserPage] = useState(1);
   const [itemPage, setItemPage] = useState(1);
   const [reportPage, setReportPage] = useState(1);
+  const [categoryPage, setCategoryPage] = useState(1);
   const itemsPerPage = 8;
 
   useEffect(() => {
@@ -43,14 +53,16 @@ const AdminPage = () => {
 
     setLoading(true);
     try {
-      const [u, r, i] = await Promise.all([
+      const [u, r, i, c] = await Promise.all([
         userService.getAllUsers(),
         reportService.getAllReports(),
-        itemService.getAllItems()
+        itemService.getAllItems(),
+        categoryService.getAllCategories()
       ]);
       setUsers(u || []);
       setReports(r || []);
       setItems(i || []);
+      setCategories(c || []);
     } catch (error) {
       console.error("Dashboard error", error);
       if (error.response?.status === 403) {
@@ -108,6 +120,12 @@ const AdminPage = () => {
         direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc"
       }));
       setReportPage(1);
+    } else if (type === "category") {
+      setCategorySort(prev => ({
+        key,
+        direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc"
+      }));
+      setCategoryPage(1);
     }
   };
 
@@ -173,6 +191,34 @@ const AdminPage = () => {
     }
   };
 
+  const handleSaveCategory = async (e) => {
+    e.preventDefault();
+    if (!categoryName.trim()) return;
+    try {
+      if (editingCategory) {
+        await categoryService.updateCategory(editingCategory._id, { name: categoryName });
+      } else {
+        await categoryService.createCategory({ name: categoryName });
+      }
+      setIsCategoryModalOpen(false);
+      setEditingCategory(null);
+      setCategoryName("");
+      fetchData();
+    } catch (error) {
+      alert("Failed to save category");
+    }
+  };
+
+  const handleDeleteCategory = async (id) => {
+    if (!window.confirm("Are you sure? This may affect items in this category.")) return;
+    try {
+      await categoryService.deleteCategory(id);
+      fetchData();
+    } catch (error) {
+      alert("Failed to delete category");
+    }
+  };
+
   const handleResolveReport = async (reportId, action) => {
     try {
       if (action === "resolve") {
@@ -231,6 +277,7 @@ const AdminPage = () => {
           <SidebarItem id="users" icon={Users} label="Users" />
           <SidebarItem id="items" icon={Package} label="Listings" />
           <SidebarItem id="reports" icon={Flag} label="Reports" />
+          <SidebarItem id="categories" icon={Layers} label="Categories" />
           
           <div className="mt-auto p-4 bg-red-50 rounded-2xl border border-red-100">
              <div className="flex items-center gap-2 text-red-600 mb-2">
@@ -560,8 +607,147 @@ const AdminPage = () => {
             );
           })()}
 
+          {activeTab === "categories" && (() => {
+            const { data: processedCategories, totalPages, totalCount } = getProcessedData(
+              categories, categorySort, categoryPage, searchQuery, ["name"]
+            );
+            return (
+              <div className="animate-in slide-in-from-bottom-4 duration-500 space-y-6">
+                <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 px-2">
+                   <p className="text-sm font-bold text-gray-500 tracking-wide">
+                     Showing <span className="text-blue-600">{processedCategories.length}</span> of <span className="text-gray-900">{totalCount}</span> marketplace categories
+                   </p>
+                   <button 
+                     onClick={() => {
+                        setEditingCategory(null);
+                        setCategoryName("");
+                        setIsCategoryModalOpen(true);
+                     }}
+                     className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-100"
+                   >
+                      <Plus size={18} /> New Category
+                   </button>
+                </div>
+
+                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                   <table className="w-full text-left">
+                      <thead className="bg-gray-50 border-b border-gray-100">
+                         <tr>
+                            <th 
+                              className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition"
+                              onClick={() => handleSort("category", "name")}
+                            >
+                              Category Name {categorySort.key === "name" && (categorySort.direction === "asc" ? "↑" : "↓")}
+                            </th>
+                            <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Active Items</th>
+                            <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                         </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                         {processedCategories.map((c) => {
+                            const itemCount = items.filter(item => (item.category?._id || item.category) === c._id).length;
+                            return (
+                              <tr key={c._id} className="hover:bg-blue-50/30 transition">
+                                 <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                       <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                          <Layers size={20} />
+                                       </div>
+                                       <p className="text-sm font-black text-gray-900">{c.name}</p>
+                                    </div>
+                                 </td>
+                                 <td className="px-6 py-4 text-center">
+                                    <span className="inline-flex items-center justify-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-black">
+                                       {itemCount} items
+                                    </span>
+                                 </td>
+                                 <td className="px-6 py-4">
+                                  <div className="flex items-center justify-end gap-2">
+                                     <button 
+                                       onClick={() => {
+                                          setEditingCategory(c);
+                                          setCategoryName(c.name);
+                                          setIsCategoryModalOpen(true);
+                                       }}
+                                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition" 
+                                       title="Edit"
+                                     >
+                                        <Edit size={18} />
+                                     </button>
+                                     <button 
+                                       onClick={() => handleDeleteCategory(c._id)} 
+                                       className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" 
+                                       title="Delete"
+                                     >
+                                        <Trash2 size={18} />
+                                     </button>
+                                  </div>
+                               </td>
+                            </tr>
+                            );
+                         })}
+                         {processedCategories.length === 0 && (
+                            <tr>
+                               <td colSpan="3" className="p-20 text-center">
+                                  <Layers className="mx-auto text-gray-200 mb-4" size={64} />
+                                  <h3 className="text-xl font-black text-gray-900">No Categories Found</h3>
+                                  <p className="text-gray-500">Try refining your search or add a new category.</p>
+                               </td>
+                            </tr>
+                         )}
+                      </tbody>
+                   </table>
+                </div>
+                <Pagination current={categoryPage} total={totalPages} onChange={setCategoryPage} />
+              </div>
+            );
+          })()}
+
         </main>
       </div>
+
+      {/* Category Modal */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="bg-white rounded-[40px] w-full max-w-lg p-10 shadow-2xl animate-in zoom-in-95 duration-300">
+              <div className="flex justify-between items-center mb-8">
+                 <h2 className="text-3xl font-black text-gray-900">{editingCategory ? "Edit Category" : "New Category"}</h2>
+                 <button onClick={() => setIsCategoryModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition">
+                    <X size={24} />
+                 </button>
+              </div>
+              <form onSubmit={handleSaveCategory} className="space-y-6">
+                 <div>
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Category Name</label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl px-6 py-4 text-lg font-bold outline-none transition-all"
+                      placeholder="e.g. Electronics, Books..."
+                      value={categoryName}
+                      onChange={(e) => setCategoryName(e.target.value)}
+                      autoFocus
+                      required
+                    />
+                 </div>
+                 <div className="flex gap-4 pt-4">
+                    <button 
+                      type="button"
+                      onClick={() => setIsCategoryModalOpen(false)}
+                      className="flex-1 bg-gray-100 text-gray-400 py-4 rounded-2xl font-black text-lg hover:bg-gray-200 hover:text-gray-600 transition"
+                    >
+                       Cancel
+                    </button>
+                    <button 
+                       type="submit"
+                       className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 transition-all active:translate-y-0"
+                    >
+                       {editingCategory ? "Update Changes" : "Create Category"}
+                    </button>
+                 </div>
+              </form>
+           </div>
+        </div>
+      )}
     </div>
   );
 };
