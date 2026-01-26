@@ -19,6 +19,11 @@ const reportService = {
   updateReport: async (id, reportData) => {
     const response = await api.patch(`/reports/${id}`, reportData);
     return response.data;
+  },
+
+  deleteReport: async (id) => {
+    const response = await api.delete(`/reports/${id}`);
+    return response.data;
   }
 };
 
