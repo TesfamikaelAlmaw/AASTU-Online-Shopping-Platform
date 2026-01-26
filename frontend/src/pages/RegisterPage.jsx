@@ -1,14 +1,16 @@
 // src/pages/RegisterPage.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import authService from "../services/auth.service";
 
 function RegisterPage() {
   const [formData, setFormData] = useState({
-    fullName: "",
+    full_name: "",
     email: "",
     password: "",
     department: "",
   });
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -16,12 +18,21 @@ function RegisterPage() {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Registration submitted:", formData);
-    alert("Registration submitted! (Check console for data)");
-    // Redirect to login after registration
-    navigate("/login");
+    setLoading(true);
+
+    try {
+      await authService.register(formData);
+      alert("Registration successful! Please login.");
+      navigate("/login");
+    } catch (error) {
+      alert(
+        error.response?.data?.message || "Registration failed"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -31,8 +42,8 @@ function RegisterPage() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
             type="text"
-            name="fullName"
-            value={formData.fullName}
+            name="full_name"
+            value={formData.full_name}
             onChange={handleChange}
             placeholder="Full Name"
             className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-400"
@@ -67,9 +78,10 @@ function RegisterPage() {
           />
           <button
             type="submit"
-            className="bg-green-500 text-white py-2 rounded hover:bg-green-600 transition"
+            disabled={loading}
+            className={`bg-green-500 text-white py-2 rounded hover:bg-green-600 transition ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            Register
+            {loading ? "Registering..." : "Register"}
           </button>
         </form>
         <p className="mt-4 text-sm text-center">

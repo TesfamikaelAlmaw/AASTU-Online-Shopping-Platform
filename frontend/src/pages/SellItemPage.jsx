@@ -1,6 +1,8 @@
 // src/pages/SellItemPage.jsx
 import React, { useState } from "react";
 import Footer from "../components/Footer";
+import itemService from "../services/item.service";
+import { useNavigate } from "react-router-dom";
 
 function SellItemPage() {
   const [formData, setFormData] = useState({
@@ -8,9 +10,12 @@ function SellItemPage() {
     description: "",
     price: "",
     category: "Book",
+    // department is not in backend Item entity yet, but keeping for UI
     department: "",
     image: null,
   });
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const categories = ["Book", "Electronics", "Clothes", "Furniture"];
 
@@ -22,19 +27,45 @@ function SellItemPage() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Item submitted:", formData);
-    alert("Item submitted! (Check console for data)");
-    // Reset form
-    setFormData({
-      title: "",
-      description: "",
-      price: "",
-      category: "Book",
-      department: "",
-      image: null,
-    });
+    setLoading(true);
+
+    try {
+      // Backend expects price as number
+      const itemData = {
+        ...formData,
+        price: Number(formData.price),
+      };
+      
+      // If image is selected, we might need FormData. 
+      // For now, sending as JSON (omitting image if it's a File) 
+      // as backend doesn't seem to have file upload logic shown yet.
+      if (itemData.image instanceof File) {
+        delete itemData.image;
+        // In a real app, you'd upload this to S3/Cloudinary and send the URL
+      }
+
+      await itemService.createItem(itemData);
+      alert("Item posted successfully!");
+      
+      // Reset form
+      setFormData({
+        title: "",
+        description: "",
+        price: "",
+        category: "Book",
+        department: "",
+        image: null,
+      });
+      navigate("/student");
+    } catch (error) {
+      alert(
+        error.response?.data?.message || "Failed to post item"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -123,9 +154,10 @@ function SellItemPage() {
 
         <button
           type="submit"
-          className="bg-green-500 text-white py-2 rounded hover:bg-green-600 transition"
+          disabled={loading}
+          className={`bg-green-500 text-white py-2 rounded hover:bg-green-600 transition ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          Submit Item
+          {loading ? "Submitting..." : "Submit Item"}
         </button>
       </form>
 	  <Footer/>

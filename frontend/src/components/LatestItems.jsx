@@ -1,58 +1,36 @@
-import React, { useState } from "react";
-import { Heart, MessageCircle, MapPin, Clock } from "lucide-react";
-
-const items = [
-  {
-    id: 1,
-    title: "Engineering Mathematics Textbook - Brand New",
-    category: "Books",
-    price: "800 ETB",
-    location: "Block 4, AASTU",
-    time: "2 hours ago",
-    author: "Sarah M.",
-    image: "/items/book.jpg",
-  },
-  {
-    id: 2,
-    title: "HP Laptop - Perfect for CS Students",
-    category: "Electronics",
-    price: "12,000 ETB",
-    location: "Block 2, AASTU",
-    time: "5 hours ago",
-    author: "John D.",
-    image: "/items/laptop.jpg",
-  },
-  {
-    id: 3,
-    title: "Scientific Calculator TI-84",
-    category: "Electronics",
-    price: "1,200 ETB",
-    location: "Block 1, AASTU",
-    time: "1 day ago",
-    author: "Mike R.",
-    image: "/items/calculator.jpg",
-  },
-  {
-    id: 4,
-    title: "University Hoodie - Size M",
-    category: "Fashion",
-    price: "450 ETB",
-    location: "Block 3, AASTU",
-    time: "3 hours ago",
-    author: "Emma K.",
-    image: "/items/hoodie.jpg",
-  },
-];
-
-const categories = ["All", "Books", "Electronics", "Fashion", "Furniture"];
+import React, { useState, useEffect } from "react";
+import { Heart, MessageCircle, MapPin, Clock, Loader2 } from "lucide-react";
+import itemService from "../services/item.service";
+import categoryService from "../services/category.service";
 
 function LatestItems() {
+  const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState(["All"]);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [itemsData, catsData] = await Promise.all([
+          itemService.getAllItems(),
+          categoryService.getAllCategories()
+        ]);
+        setItems(itemsData);
+        setCategories(["All", ...catsData.map(c => c.name)]);
+      } catch (error) {
+        console.error("Failed to fetch latest items", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const filteredItems =
     selectedCategory === "All"
       ? items
-      : items.filter((item) => item.category === selectedCategory);
+      : items.filter((item) => item.category?.name === selectedCategory);
 
   return (
     <section className="py-16 px-6 bg-white">
@@ -84,55 +62,70 @@ function LatestItems() {
 
         {/* Items Grid */}
         <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredItems.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden flex flex-col"
-            >
-              {/* Image */}
-              <img
-                src={item.image}
-                alt={item.title}
-                className="h-48 w-full object-cover"
-              />
-
-              {/* Content */}
-              <div className="p-4 flex flex-col flex-1">
-                <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-full w-fit mb-2">
-                  {item.category}
-                </span>
-
-                <h3 className="font-semibold text-gray-800 mb-1">
-                  {item.title}
-                </h3>
-
-                <p className="text-green-600 font-bold mb-2">{item.price}</p>
-
-                <div className="flex items-center text-gray-500 text-sm mb-1">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  {item.location}
-                </div>
-                <div className="flex items-center text-gray-500 text-sm mb-1">
-                  <Clock className="w-4 h-4 mr-1" />
-                  {item.time}
+          {loading ? (
+             <div className="col-span-full flex justify-center py-12">
+               <Loader2 className="animate-spin text-blue-500" size={32} />
+             </div>
+          ) : filteredItems.length > 0 ? (
+            filteredItems.map((item) => (
+              <div
+                key={item._id}
+                className="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden flex flex-col"
+              >
+                {/* Image */}
+                <div className="h-48 w-full bg-gray-100 flex items-center justify-center">
+                   {item.images && item.images.length > 0 ? (
+                     <img src={item.images[0]} alt={item.title} className="w-full h-full object-cover" />
+                   ) : (
+                     <span className="text-gray-400">No Image</span>
+                   )}
                 </div>
 
-                <p className="text-sm text-gray-700 mt-2 flex-1">
-                  by {item.author}
-                </p>
+                {/* Content */}
+                <div className="p-4 flex flex-col flex-1">
+                  <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-full w-fit mb-2">
+                    {item.category?.name || "Other"}
+                  </span>
 
-                {/* Footer */}
-                <div className="mt-4 flex items-center justify-between">
-                  <button className="p-2 hover:bg-gray-100 rounded-full">
-                    <Heart className="w-5 h-5 text-gray-500" />
-                  </button>
-                  <button className="flex items-center text-sm text-gray-700 hover:text-green-600">
-                    <MessageCircle className="w-4 h-4 mr-1" /> Chat
-                  </button>
+                  <h3 className="font-semibold text-gray-800 mb-1 truncate">
+                    {item.title}
+                  </h3>
+
+                  <p className="text-green-600 font-bold mb-2">${item.price}</p>
+
+                  <div className="flex items-center text-gray-500 text-sm mb-1">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    {item.owner_id?.department || "AASTU"}
+                  </div>
+                  <div className="flex items-center text-gray-500 text-sm mb-1">
+                    <Clock className="w-4 h-4 mr-1" />
+                    {new Date(item.createdAt).toLocaleDateString()}
+                  </div>
+
+                  <p className="text-sm text-gray-700 mt-2 flex-1">
+                    by {item.owner_id?.full_name || "Unknown"}
+                  </p>
+
+                  {/* Footer */}
+                  <div className="mt-4 flex items-center justify-between">
+                    <button className="p-2 hover:bg-gray-100 rounded-full">
+                      <Heart className="w-5 h-5 text-gray-500" />
+                    </button>
+                    <button 
+                      onClick={() => window.location.href=`/view-profile/${item.owner_id?._id}`}
+                      className="flex items-center text-sm text-gray-700 hover:text-green-600"
+                    >
+                      <MessageCircle className="w-4 h-4 mr-1" /> Profile
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+             <div className="col-span-full text-center text-gray-500 py-12">
+                No items found in this category.
+             </div>
+          )}
         </div>
       </div>
     </section>

@@ -13,12 +13,15 @@ export class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async register(dto: RegisterDto) {
-    if (!dto.email.endsWith('@aastu.edu.et')) {
-      throw new BadRequestException('Only AASTU university emails allowed');
-    }
+
+    // Todo: i will remove this in production level
+
+    // if (!dto.email.endsWith('@aastu.edu.et')) {
+    //   throw new BadRequestException('Only AASTU university emails allowed');
+    // }
 
     const existingUser = await this.userModel.findOne({ email: dto.email });
     if (existingUser) {

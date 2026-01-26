@@ -1,50 +1,33 @@
-import React from "react";
-import { Heart, Eye, MessageCircle } from "lucide-react";
-
-const featuredItems = [
-  {
-    title: "MacBook Pro 13\" M1 2021",
-    price: "$899",
-    category: "Electronics",
-    condition: "like-new",
-    seller: "Sarah Johnson",
-    dept: "Computer Science",
-    likes: 24,
-    views: 156,
-  },
-  {
-    title: "Data Structures & Algorithms Textbook",
-    price: "$45",
-    category: "Books",
-    condition: "used",
-    seller: "Mike Chen",
-    dept: "Software Engineering",
-    likes: 12,
-    views: 89,
-  },
-  {
-    title: "Gaming Chair - Almost New",
-    price: "$120",
-    category: "Furniture",
-    condition: "like-new",
-    seller: "Alex Rivera",
-    dept: "Information Systems",
-    likes: 18,
-    views: 134,
-  },
-  {
-    title: "iPhone 13 - Excellent Condition",
-    price: "$650",
-    category: "Electronics",
-    condition: "used",
-    seller: "Emma Wilson",
-    dept: "IT",
-    likes: 31,
-    views: 203,
-  },
-];
+import React, { useState, useEffect } from "react";
+import { Heart, Eye, MessageCircle, Loader2 } from "lucide-react";
+import itemService from "../services/item.service";
 
 export default function FeaturedItems() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const data = await itemService.getAllItems();
+        // Just take the first 4 for "featured"
+        setItems(data.slice(0, 4));
+      } catch (error) {
+        console.error("Failed to fetch featured items", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchItems();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="animate-spin text-blue-500" size={32} />
+      </div>
+    );
+  }
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
       {/* Header */}
@@ -60,7 +43,7 @@ export default function FeaturedItems() {
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {featuredItems.map((item, i) => (
+        {items.map((item, i) => (
           <div
             key={i}
             className="bg-white rounded-xl shadow p-4 flex flex-col relative"
@@ -68,12 +51,12 @@ export default function FeaturedItems() {
             {/* Condition Badge */}
             <span
               className={`absolute top-3 left-3 px-3 py-1 text-sm rounded-full text-white ${
-                item.condition === "like-new" ? "bg-blue-600" : "bg-gray-600"
+                item.condition === "new" ? "bg-blue-600" : "bg-gray-600"
               }`}
             >
               {item.condition}
             </span>
-
+            
             {/* Favorite button */}
             <button className="absolute top-3 right-3 text-gray-500 hover:text-red-500">
               <Heart size={20} />
@@ -81,36 +64,42 @@ export default function FeaturedItems() {
 
             {/* Image Placeholder */}
             <div className="w-full h-40 bg-gray-100 flex items-center justify-center mb-4 rounded-lg">
-              <span className="text-gray-400 text-sm">Image</span>
+              {item.images && item.images.length > 0 ? (
+                <img src={item.images[0]} alt={item.title} className="w-full h-full object-cover rounded-lg" />
+              ) : (
+                <span className="text-gray-400 text-sm">No Image</span>
+              )}
             </div>
 
             {/* Title & Price */}
             <div className="flex justify-between items-center mb-2">
-              <h3 className="font-semibold text-sm">{item.title}</h3>
-              <p className="text-blue-600 font-bold">{item.price}</p>
+              <h3 className="font-semibold text-sm truncate pr-2">{item.title}</h3>
+              <p className="text-blue-600 font-bold">${item.price}</p>
             </div>
 
             {/* Category */}
             <span className="text-xs bg-gray-100 px-2 py-1 rounded-full mb-3 inline-block">
-              {item.category}
+              {item.category?.name || "Uncategorized"}
             </span>
 
             {/* Seller Info */}
             <div className="flex items-center mb-3">
-              <div className="w-8 h-8 bg-gray-200 rounded-full mr-2" />
+              <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center text-xs font-bold text-gray-500">
+                {item.owner_id?.full_name?.charAt(0) || "U"}
+              </div>
               <div>
-                <p className="text-sm font-medium">{item.seller}</p>
-                <p className="text-xs text-gray-500">{item.dept}</p>
+                <p className="text-sm font-medium">{item.owner_id?.full_name || "Unknown Seller"}</p>
+                <p className="text-xs text-gray-500">{item.owner_id?.department || "AASTU"}</p>
               </div>
             </div>
 
-            {/* Stats */}
+            {/* Stats (Placeholders for now) */}
             <div className="flex items-center gap-4 text-gray-500 text-sm mb-3">
               <div className="flex items-center gap-1">
-                <Heart size={16} /> {item.likes}
+                <Heart size={16} /> {Math.floor(Math.random() * 50)}
               </div>
               <div className="flex items-center gap-1">
-                <Eye size={16} /> {item.views}
+                <Eye size={16} /> {Math.floor(Math.random() * 200)}
               </div>
             </div>
 
