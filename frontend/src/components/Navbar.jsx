@@ -6,6 +6,7 @@ import authService from "../services/auth.service";
 function Navbar() {
   const user = authService.getCurrentUser();
   const [showMenu, setShowMenu] = useState(false);
+  const isAdmin = user?.role === 'admin';
 
   const handleLogout = () => {
     authService.logout();
@@ -34,33 +35,42 @@ function Navbar() {
         </div>
       </Link>
 
-      {/* Middle: Search bar */}
-      <div className="hidden lg:flex flex-1 max-w-xl mx-8">
-        <div className="relative w-full">
-          <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search items, categories..."
-            className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          />
+      {/* Middle: Search bar - Hidden for admins */}
+      {!isAdmin && (
+        <div className="hidden lg:flex flex-1 max-w-xl mx-8">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search items, categories..."
+              className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Right: Buttons */}
       <div className="flex items-center gap-4 md:gap-6">
         {user ? (
           <>
-            <Link
-              to="/sell_item"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold transition shadow-lg shadow-blue-100 text-sm md:text-base whitespace-nowrap"
-            >
-              + Sell Item
-            </Link>
+            {/* Sell Item Button - Hidden for admins */}
+            {!isAdmin && (
+              <Link
+                to="/sell_item"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold transition shadow-lg shadow-blue-100 text-sm md:text-base whitespace-nowrap"
+              >
+                + Sell Item
+              </Link>
+            )}
 
             <div className="flex items-center gap-4 relative">
-              <Link to="/messages" className="text-gray-600 hover:text-blue-600 transition">
-                <MessageCircle className="w-6 h-6" />
-              </Link>
+              {/* Messages Icon - Hidden for admins */}
+              {!isAdmin && (
+                <Link to="/messages" className="text-gray-600 hover:text-blue-600 transition">
+                  <MessageCircle className="w-6 h-6" />
+                </Link>
+              )}
+              
               <Link to="/notifications" className="text-gray-600 hover:text-blue-600 transition">
                 <Bell className="w-6 h-6" />
               </Link>

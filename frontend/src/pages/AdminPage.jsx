@@ -27,6 +27,16 @@ const AdminPage = () => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [categoryName, setCategoryName] = useState("");
 
+  // Admin Modal State
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [adminFormData, setAdminFormData] = useState({
+    full_name: "",
+    email: "",
+    password: "",
+    department: "",
+    role: "admin"
+  });
+
   // Sorting & Pagination State
   const [userSort, setUserSort] = useState({ key: "full_name", direction: "asc" });
   const [itemSort, setItemSort] = useState({ key: "createdAt", direction: "desc" });
@@ -232,6 +242,25 @@ const AdminPage = () => {
     }
   };
 
+  const handleCreateAdmin = async (e) => {
+    e.preventDefault();
+    try {
+      await authService.createAdmin(adminFormData);
+      setIsAdminModalOpen(false);
+      setAdminFormData({
+        full_name: "",
+        email: "",
+        password: "",
+        department: "",
+        role: "admin"
+      });
+      fetchData();
+      alert("Admin created successfully!");
+    } catch (error) {
+      alert(error.response?.data?.message || "Failed to create admin");
+    }
+  };
+
   const SidebarItem = ({ id, icon: Icon, label }) => (
     <button
       onClick={() => setActiveTab(id)}
@@ -278,6 +307,7 @@ const AdminPage = () => {
           <SidebarItem id="items" icon={Package} label="Listings" />
           <SidebarItem id="reports" icon={Flag} label="Reports" />
           <SidebarItem id="categories" icon={Layers} label="Categories" />
+          <SidebarItem id="admins" icon={ShieldCheck} label="Admins" />
           
           <div className="mt-auto p-4 bg-red-50 rounded-2xl border border-red-100">
              <div className="flex items-center gap-2 text-red-600 mb-2">
@@ -607,6 +637,96 @@ const AdminPage = () => {
             );
           })()}
 
+          {activeTab === "admins" && (() => {
+            const adminUsers = users.filter(u => u.role === 'admin');
+            const { data: processedAdmins, totalPages, totalCount } = getProcessedData(
+              adminUsers, userSort, userPage, searchQuery, ["full_name", "email", "department"]
+            );
+            return (
+              <div className="animate-in slide-in-from-bottom-4 duration-500 space-y-6">
+                <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 px-2">
+                  <p className="text-sm font-bold text-gray-500 tracking-wide">
+                    Showing <span className="text-blue-600">{processedAdmins.length}</span> of <span className="text-gray-900">{totalCount}</span> administrators
+                  </p>
+                  <button 
+                    onClick={() => setIsAdminModalOpen(true)}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-100"
+                  >
+                    <Plus size={18} /> Create Admin
+                  </button>
+                </div>
+
+                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                  <table className="w-full text-left">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                      <tr>
+                        <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Admin Details</th>
+                        <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Department</th>
+                        <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Role</th>
+                        <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Status</th>
+                        <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {processedAdmins.map((admin) => (
+                        <tr key={admin._id} className="hover:bg-blue-50/30 transition">
+                          <td className="px-6 py-4">
+                            <Link to={`/view-profile/${admin._id}`} className="flex items-center gap-3 group">
+                              <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold overflow-hidden group-hover:ring-2 group-hover:ring-purple-500 transition-all">
+                                {admin.profile_image ? <img src={admin.profile_image} className="w-full h-full object-cover" /> : admin.full_name?.charAt(0)}
+                              </div>
+                              <div className="group-hover:translate-x-1 transition-transform">
+                                <p className="text-sm font-black text-gray-900 group-hover:text-blue-600 transition-colors">{admin.full_name}</p>
+                                <p className="text-xs text-gray-500">{admin.email}</p>
+                              </div>
+                            </Link>
+                          </td>
+                          <td className="px-6 py-4 text-sm font-bold text-gray-600">{admin.department || 'N/A'}</td>
+                          <td className="px-6 py-4">
+                            <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-100 text-purple-700">
+                              {admin.role}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm font-bold">
+                            <span className={`px-3 py-1 rounded-full text-xs ${admin.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                              {admin.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              {admin.status === 'active' ? (
+                                <button onClick={() => handleUpdateUserStatus(admin._id, 'suspended')} className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg transition" title="Suspend">
+                                  <ShieldAlert size={18} />
+                                </button>
+                              ) : (
+                                <button onClick={() => handleUpdateUserStatus(admin._id, 'active')} className="p-2 text-green-500 hover:bg-green-50 rounded-lg transition" title="Activate">
+                                  <ShieldCheck size={18} />
+                                </button>
+                              )}
+                              <button onClick={() => handleDeleteUser(admin._id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="Delete">
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {processedAdmins.length === 0 && (
+                        <tr>
+                          <td colSpan="5" className="p-20 text-center">
+                            <ShieldCheck className="mx-auto text-gray-200 mb-4" size={64} />
+                            <h3 className="text-xl font-black text-gray-900">No Administrators Found</h3>
+                            <p className="text-gray-500">Create your first admin user to get started.</p>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <Pagination current={userPage} total={totalPages} onChange={setUserPage} />
+              </div>
+            );
+          })()}
+
           {activeTab === "categories" && (() => {
             const { data: processedCategories, totalPages, totalCount } = getProcessedData(
               categories, categorySort, categoryPage, searchQuery, ["name"]
@@ -705,6 +825,98 @@ const AdminPage = () => {
 
         </main>
       </div>
+
+      {/* Admin Creation Modal */}
+      {isAdminModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-[40px] w-full max-w-2xl p-10 shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-black text-gray-900">Create New Admin</h2>
+              <button onClick={() => setIsAdminModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition">
+                <X size={24} />
+              </button>
+            </div>
+            <form onSubmit={handleCreateAdmin} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Full Name</label>
+                  <input 
+                    type="text" 
+                    className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl px-6 py-4 text-lg font-bold outline-none transition-all"
+                    placeholder="John Doe"
+                    value={adminFormData.full_name}
+                    onChange={(e) => setAdminFormData({...adminFormData, full_name: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Email</label>
+                  <input 
+                    type="email" 
+                    className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl px-6 py-4 text-lg font-bold outline-none transition-all"
+                    placeholder="admin@aastu.edu.et"
+                    value={adminFormData.email}
+                    onChange={(e) => setAdminFormData({...adminFormData, email: e.target.value})}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Password</label>
+                  <input 
+                    type="password" 
+                    className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl px-6 py-4 text-lg font-bold outline-none transition-all"
+                    placeholder="••••••••"
+                    value={adminFormData.password}
+                    onChange={(e) => setAdminFormData({...adminFormData, password: e.target.value})}
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Department</label>
+                  <input 
+                    type="text" 
+                    className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl px-6 py-4 text-lg font-bold outline-none transition-all"
+                    placeholder="Administration"
+                    value={adminFormData.department}
+                    onChange={(e) => setAdminFormData({...adminFormData, department: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Role</label>
+                <select 
+                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl px-6 py-4 text-lg font-bold outline-none transition-all"
+                  value={adminFormData.role}
+                  onChange={(e) => setAdminFormData({...adminFormData, role: e.target.value})}
+                  required
+                >
+                  <option value="admin">Admin</option>
+                  <option value="student">Student</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-2 px-1">Select the role for this user. Admins have full access to the admin portal.</p>
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setIsAdminModalOpen(false)}
+                  className="flex-1 bg-gray-100 text-gray-400 py-4 rounded-2xl font-black text-lg hover:bg-gray-200 hover:text-gray-600 transition"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 transition-all active:translate-y-0"
+                >
+                  Create Admin
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Category Modal */}
       {isCategoryModalOpen && (

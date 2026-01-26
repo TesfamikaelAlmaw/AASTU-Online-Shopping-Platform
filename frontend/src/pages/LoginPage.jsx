@@ -18,15 +18,22 @@ function LoginPage() {
         password,
       });
       
-      if (res.user?.role === 'admin') {
-        navigate("/admin");
-      } else {
+      // This should only allow students now
+      if (res.user?.role === 'student') {
         navigate("/student");
+      } else {
+        alert("Unexpected user role. Please contact support.");
       }
     } catch (error) {
-      alert(
-        error.response?.data?.message || "Login failed"
-      );
+      const errorMessage = error.response?.data?.message || "Login failed";
+      
+      // Check if it's an admin trying to login
+      if (errorMessage.includes("admin portal") || errorMessage.includes("Admin users")) {
+        alert("Admin users must login through the Admin Portal. Redirecting...");
+        setTimeout(() => navigate("/admin/login"), 1500);
+      } else {
+        alert(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -35,7 +42,7 @@ function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="bg-white rounded-lg shadow p-8 w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Student Login</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
@@ -71,9 +78,19 @@ function LoginPage() {
             Register
           </Link>
         </p>
+
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <p className="text-xs text-center text-gray-500">
+            Administrator?{" "}
+            <Link to="/admin/login" className="text-blue-600 font-semibold hover:underline">
+              Access Admin Portal
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
 }
 
 export default LoginPage;
+
