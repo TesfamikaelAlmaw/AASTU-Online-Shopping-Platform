@@ -1,23 +1,43 @@
 // src/pages/SellItemPage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Footer from "../components/Footer";
 import itemService from "../services/item.service";
+import categoryService from "../services/category.service";
 import { useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
 function SellItemPage() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     price: "",
-    category: "Book",
-    // department is not in backend Item entity yet, but keeping for UI
+    category: "",
     department: "",
+    condition: "used",
     image: null,
   });
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingCats, setLoadingCats] = useState(true);
   const navigate = useNavigate();
 
-  const categories = ["Book", "Electronics", "Clothes", "Furniture"];
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const data = await categoryService.getAllCategories();
+      setCategories(data);
+      if (data.length > 0) {
+        setFormData(prev => ({ ...prev, category: data[0]._id }));
+      }
+    } catch (err) {
+      console.error("Failed to fetch categories", err);
+    } finally {
+      setLoadingCats(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -32,30 +52,28 @@ function SellItemPage() {
     setLoading(true);
 
     try {
-      // Backend expects price as number
-      const itemData = {
-        ...formData,
-        price: Number(formData.price),
-      };
+      const data = new FormData();
+      data.append("title", formData.title);
+      data.append("description", formData.description);
+      data.append("price", formData.price);
+      data.append("category", formData.category);
+      data.append("department", formData.department);
+      data.append("condition", formData.condition);
       
-      // If image is selected, we might need FormData. 
-      // For now, sending as JSON (omitting image if it's a File) 
-      // as backend doesn't seem to have file upload logic shown yet.
-      if (itemData.image instanceof File) {
-        delete itemData.image;
-        // In a real app, you'd upload this to S3/Cloudinary and send the URL
+      if (formData.image) {
+        data.append("image", formData.image);
       }
 
-      await itemService.createItem(itemData);
+      await itemService.createItem(data);
       alert("Item posted successfully!");
       
-      // Reset form
       setFormData({
         title: "",
         description: "",
         price: "",
-        category: "Book",
+        category: categories.length > 0 ? categories[0]._id : "",
         department: "",
+        condition: "used",
         image: null,
       });
       navigate("/student");
@@ -69,98 +87,152 @@ function SellItemPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center p-6">
-      <h1 className="text-2xl font-bold mb-6">Sell Your Item</h1>
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-lg shadow p-6 w-full max-w-lg flex flex-col gap-4"
-      >
-        <label className="flex flex-col">
-          Item Title:
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            placeholder="Enter item title"
-            className="border rounded p-2 mt-1"
-            required
-          />
-        </label>
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center p-6 md:p-10">
+      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-sm border p-8 md:p-12">
+        <h1 className="text-3xl font-black text-gray-900 mb-2">Sell Your Item</h1>
+        <p className="text-gray-500 mb-10">Fill in the details below to list your item on the AASTU Marketplace.</p>
 
-        <label className="flex flex-col">
-          Description:
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            placeholder="Enter item description"
-            className="border rounded p-2 mt-1"
-            required
-          />
-        </label>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-gray-700">Item Title</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="What are you selling?"
+                className="border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition"
+                required
+              />
+            </div>
 
-        <label className="flex flex-col">
-          Price:
-          <input
-            type="number"
-            name="price"
-            value={formData.price}
-            onChange={handleChange}
-            placeholder="Enter price in ETB"
-            className="border rounded p-2 mt-1"
-            required
-          />
-        </label>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-gray-700">Price (ETB)</label>
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+                placeholder="Enter amount"
+                className="border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition"
+                required
+              />
+            </div>
+          </div>
 
-        <label className="flex flex-col">
-          Category:
-          <select
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            className="border rounded p-2 mt-1"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-gray-700">Category</label>
+              {loadingCats ? (
+                <div className="h-[52px] bg-gray-50 rounded-xl flex items-center px-4">
+                  <Loader2 className="animate-spin text-blue-500 mr-2" size={18} />
+                  <span className="text-sm text-gray-400">Loading categories...</span>
+                </div>
+              ) : (
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition bg-white"
+                >
+                  {categories.map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                  {categories.length === 0 && <option value="">No categories available</option>}
+                </select>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-gray-700">Department</label>
+              <input
+                type="text"
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                placeholder="e.g. Software Engineering"
+                className="border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Item Condition */}
+          <div className="flex flex-col gap-3">
+            <label className="text-sm font-bold text-gray-700">Item Condition</label>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setFormData({...formData, condition: "new"})}
+                className={`flex-1 py-3 px-6 rounded-xl font-bold border-2 transition ${
+                  formData.condition === "new" 
+                  ? "border-blue-500 bg-blue-50 text-blue-600" 
+                  : "border-gray-100 text-gray-500 hover:border-gray-200"
+                }`}
+              >
+                New
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({...formData, condition: "used"})}
+                className={`flex-1 py-3 px-6 rounded-xl font-bold border-2 transition ${
+                  formData.condition === "used" 
+                  ? "border-blue-500 bg-blue-50 text-blue-600" 
+                  : "border-gray-100 text-gray-500 hover:border-gray-200"
+                }`}
+              >
+                Used
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-gray-700">Description</label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows="4"
+              placeholder="Provide details about the item's features, quality, etc."
+              className="border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition"
+              required
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-gray-700">Upload Image</label>
+            <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-blue-400 transition cursor-pointer relative">
+              <input
+                type="file"
+                name="image"
+                onChange={handleChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              <div className="text-gray-400">
+                {formData.image ? (
+                  <span className="text-blue-600 font-bold">{formData.image.name}</span>
+                ) : (
+                  <span>Click to upload or drag and drop</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || categories.length === 0}
+            className={`mt-4 bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-blue-100 hover:bg-blue-700 transition transform hover:-translate-y-0.5 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col">
-          Department:
-          <input
-            type="text"
-            name="department"
-            value={formData.department}
-            onChange={handleChange}
-            placeholder="Enter your department"
-            className="border rounded p-2 mt-1"
-            required
-          />
-        </label>
-
-        <label className="flex flex-col">
-          Upload Image:
-          <input
-            type="file"
-            name="image"
-            onChange={handleChange}
-            className="mt-1"
-          />
-        </label>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className={`bg-green-500 text-white py-2 rounded hover:bg-green-600 transition ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          {loading ? "Submitting..." : "Submit Item"}
-        </button>
-      </form>
-	  <Footer/>
+            {loading ? "Listing Item..." : "List Item for Sale"}
+          </button>
+        </form>
+      </div>
+      <div className="w-full mt-10">
+        <Footer />
+      </div>
     </div>
   );
 }

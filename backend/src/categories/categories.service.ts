@@ -19,6 +19,10 @@ export class CategoriesService {
 		return this.categoryModel.find();
 	}
 
+	async findByName(name: string) {
+		return this.categoryModel.findOne({ name });
+	}
+
 	async findOne(id: string) {
 		const category = await this.categoryModel.findById(id);
 		if (!category) throw new NotFoundException('Category not found');

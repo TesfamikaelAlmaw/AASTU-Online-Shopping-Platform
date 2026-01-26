@@ -17,7 +17,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @Roles('admin')
+  @Roles('admin,student')
   getUser(@Param('id') id: string) {
     return this.usersService.findById(id);
   }

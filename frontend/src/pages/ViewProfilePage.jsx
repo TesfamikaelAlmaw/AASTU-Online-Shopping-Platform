@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import userService from "../services/user.service";
 import itemService from "../services/item.service";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageCircle, ShoppingBag, Calendar, Mail } from "lucide-react";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 function ViewProfilePage() {
   const { sellerId } = useParams();
@@ -15,14 +17,10 @@ function ViewProfilePage() {
       if (!sellerId) return;
       setLoading(true);
       try {
-        // Since view profile might be public, but userService.getUserById is admin role-guarded on backend...
-        // I might need a public profile endpoint. 
-        // For now, I'll attempt fetching all items and filtering to find the user if getUserById fails.
         let userData;
         try {
            userData = await userService.getUserById(sellerId);
         } catch (err) {
-           // Fallback: try to find user info from items if it was populated
            const allItems = await itemService.getAllItems();
            const itemFromSeller = allItems.find(i => i.owner_id?._id === sellerId);
            if (itemFromSeller) userData = itemFromSeller.owner_id;
@@ -47,43 +45,101 @@ function ViewProfilePage() {
   }
 
   if (!seller) {
-     return <div className="flex justify-center items-center h-screen">User Not Found</div>;
+     return <div className="flex justify-center items-center h-screen text-xl font-semibold">User Not Found</div>;
   }
 
   return (
-    <div className="flex flex-col items-center p-6 bg-gray-50 min-h-screen">
-      {/* Seller Profile */}
-      <div className="bg-white rounded-lg shadow p-6 w-full max-w-md flex flex-col items-center mb-6">
-        <div className="w-32 h-32 rounded-full bg-blue-100 flex items-center justify-center text-4xl font-bold text-blue-600 mb-4">
-           {seller.full_name?.charAt(0) || "U"}
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <Navbar />
+      
+      <div className="flex-1 flex flex-col items-center p-6 md:p-10">
+        {/* Seller Profile Header */}
+        <div className="bg-white rounded-3xl shadow-sm border p-8 w-full max-w-4xl flex flex-col md:flex-row items-center md:items-start gap-8 mb-10">
+          <div className="w-40 h-40 rounded-full bg-blue-100 flex items-center justify-center text-5xl font-bold text-blue-600 shadow-inner">
+             {seller.full_name?.charAt(0) || "U"}
+          </div>
+          
+          <div className="flex-1 flex flex-col text-center md:text-left">
+            <h2 className="text-4xl font-extrabold text-gray-900 mb-2">{seller.full_name}</h2>
+            <p className="text-xl text-blue-600 font-semibold mb-4">{seller.department || "AASTU Student"}</p>
+            
+            <div className="flex flex-wrap justify-center md:justify-start gap-4 mb-6">
+              <div className="flex items-center gap-2 text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full text-sm">
+                <Mail size={16} /> {seller.email}
+              </div>
+              <div className="flex items-center gap-2 text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full text-sm">
+                <Calendar size={16} /> Joined {new Date(seller.createdAt).toLocaleDateString()}
+              </div>
+              <div className="flex items-center gap-2 text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full text-sm">
+                <ShoppingBag size={16} /> {sellerPosts.length} Items Posted
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link 
+                to="/contact-seller"
+                className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg shadow-green-100"
+              >
+                <MessageCircle size={20} /> Chat with Seller
+              </Link>
+              <button className="inline-flex items-center justify-center gap-2 border-2 border-gray-200 hover:border-blue-500 hover:text-blue-600 px-8 py-3 rounded-xl font-bold transition">
+                Share Profile
+              </button>
+            </div>
+          </div>
         </div>
-        <h2 className="text-2xl font-bold">{seller.full_name}</h2>
-        <p className="text-gray-600">{seller.department || "AASTU Student"}</p>
-        <p className="text-gray-500 mb-4">{seller.email}</p>
-        <p className="text-gray-700 text-center">Member since {new Date(seller.createdAt).toLocaleDateString()}</p>
+
+        {/* Seller Latest Posts */}
+        <div className="w-full max-w-6xl">
+          <div className="flex justify-between items-end mb-8">
+            <h3 className="text-3xl font-bold text-gray-900">Latest Listings</h3>
+            <span className="text-gray-500 font-medium">{sellerPosts.length} results</span>
+          </div>
+
+          {sellerPosts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {sellerPosts.map((post) => (
+                <Link
+                  key={post._id}
+                  to={`/item/${post._id}`}
+                  className="group bg-white rounded-2xl shadow-sm border overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col"
+                >
+                  <div className="h-48 bg-gray-100 flex items-center justify-center relative overflow-hidden">
+                    {post.images && post.images.length > 0 ? (
+                      <img src={post.images[0]} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                    ) : (
+                      <span className="text-gray-400 font-medium">No Image Available</span>
+                    )}
+                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-bold text-blue-600 shadow-sm">
+                      {post.category?.name || "Other"}
+                    </div>
+                  </div>
+                  
+                  <div className="p-5 flex flex-col flex-1">
+                    <h4 className="font-bold text-lg text-gray-900 mb-2 group-hover:text-blue-600 transition truncate">{post.title}</h4>
+                    <p className="text-2xl font-black text-blue-600 mb-3">${post.price}</p>
+                    <p className="text-gray-600 text-sm line-clamp-2 flex-1">{post.description}</p>
+                    
+                    <div className="mt-4 pt-4 border-t flex items-center text-xs text-gray-400 font-medium">
+                      <Calendar size={12} className="mr-1" /> Posted on {new Date(post.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl p-20 border border-dashed flex flex-col items-center justify-center text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
+                <ShoppingBag size={32} />
+              </div>
+              <h4 className="text-xl font-bold text-gray-900 mb-1">No postings yet</h4>
+              <p className="text-gray-500">This user hasn't listed any items for sale yet.</p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Seller Latest Posts */}
-      <div className="w-full max-w-4xl">
-        <h3 className="text-xl font-bold mb-4">Latest Posts ({sellerPosts.length})</h3>
-        {sellerPosts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sellerPosts.map((post) => (
-              <div
-                key={post._id}
-                className="bg-white rounded-lg shadow p-4 hover:shadow-lg transition"
-              >
-                <h4 className="font-semibold text-lg">{post.title}</h4>
-                <p className="text-blue-600 font-bold">${post.price}</p>
-                <p className="text-gray-500 text-sm">{post.category?.name || "Other"}</p>
-                <p className="text-gray-700 mt-2 text-sm line-clamp-2">{post.description}</p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-600">No posts found for this user.</p>
-        )}
-      </div>
+      <Footer />
     </div>
   );
 }

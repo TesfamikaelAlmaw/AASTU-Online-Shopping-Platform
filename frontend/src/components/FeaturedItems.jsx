@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Heart, Eye, MessageCircle, Loader2 } from "lucide-react";
 import itemService from "../services/item.service";
-
+import { Link } from "react-router-dom";
 export default function FeaturedItems() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -72,10 +72,12 @@ export default function FeaturedItems() {
             </div>
 
             {/* Title & Price */}
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-semibold text-sm truncate pr-2">{item.title}</h3>
-              <p className="text-blue-600 font-bold">${item.price}</p>
-            </div>
+            <Link to={`/item/${item._id}`} className="block hover:text-blue-600 transition">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-semibold text-sm truncate pr-2">{item.title}</h3>
+                <p className="text-blue-600 font-bold">${item.price}</p>
+              </div>
+            </Link>
 
             {/* Category */}
             <span className="text-xs bg-gray-100 px-2 py-1 rounded-full mb-3 inline-block">
@@ -83,15 +85,17 @@ export default function FeaturedItems() {
             </span>
 
             {/* Seller Info */}
-            <div className="flex items-center mb-3">
-              <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center text-xs font-bold text-gray-500">
-                {item.owner_id?.full_name?.charAt(0) || "U"}
+            <Link to={`/view-profile/${item.owner_id?._id}`} className="block hover:bg-gray-50 rounded-lg p-1 transition">
+              <div className="flex items-center mb-3">
+                <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center text-xs font-bold text-gray-500">
+                  {item.owner_id?.full_name?.charAt(0) || "U"}
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{item.owner_id?.full_name || "Unknown Seller"}</p>
+                  <p className="text-xs text-gray-500">{item.owner_id?.department || "AASTU"}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium">{item.owner_id?.full_name || "Unknown Seller"}</p>
-                <p className="text-xs text-gray-500">{item.owner_id?.department || "AASTU"}</p>
-              </div>
-            </div>
+            </Link>
 
             {/* Stats (Placeholders for now) */}
             <div className="flex items-center gap-4 text-gray-500 text-sm mb-3">
@@ -104,9 +108,12 @@ export default function FeaturedItems() {
             </div>
 
             {/* Contact Button */}
-            <button className="mt-auto flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition">
-              <MessageCircle size={18} /> Contact Seller
-            </button>
+            <Link 
+              to={`/item/${item._id}`}
+              className="mt-auto flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition"
+            >
+              <MessageCircle size={18} /> View Details
+            </Link>
           </div>
         ))}
       </div>

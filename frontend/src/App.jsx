@@ -11,6 +11,8 @@ import MessagePage from "./pages/MessagePage";
 import NotificationPage from "./pages/NotificationPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import ItemDetailPage from "./pages/ItemDetailPage";
+
 function App() {
   return (
     <div>
@@ -24,6 +26,7 @@ function App() {
           <Route path="/contact-seller" element={<ContactSeller />} />
           <Route path="/view-profile/:sellerId" element={<ViewProfilePage />} />
           <Route path="/sell_item" element={<SellItemPage />} />
+          <Route path="/item/:itemId" element={<ItemDetailPage />} />
           <Route path="/messages" element={<MessagePage />} />
           <Route path="/notifications" element={<NotificationPage />} />
           <Route path="/register" element={<RegisterPage />} />

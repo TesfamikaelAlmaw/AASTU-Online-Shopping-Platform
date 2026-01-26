@@ -7,11 +7,9 @@ import { UpdateStatusDto } from './dto/update-status.dto';
 @Injectable()
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
-
   async findAll(): Promise<User[]> {
     return this.userModel.find().exec();
   }
-
   async findById(id: string): Promise<User> {
     const user = await this.userModel.findById(id).exec();
     if (!user) throw new NotFoundException('User not found');

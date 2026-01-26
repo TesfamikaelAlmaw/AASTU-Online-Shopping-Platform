@@ -13,8 +13,8 @@ async function bootstrap() {
       transform: true,       // auto convert types
     }),
   );
-   app.enableCors({
-    origin: ' http://localhost:5173', // React dev server
+  app.enableCors({
+    origin: 'http://localhost:5173', // React dev server
     credentials: true,
   });
 
