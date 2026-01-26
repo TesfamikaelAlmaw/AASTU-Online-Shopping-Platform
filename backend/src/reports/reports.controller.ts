@@ -3,6 +3,7 @@ import {
 	Get,
 	Post,
 	Patch,
+	Delete,
 	Body,
 	Param,
 	UseGuards,
@@ -42,5 +43,12 @@ export class ReportsController {
 	@Patch(':id')
 	update(@Param('id') id: string, @Body() body) {
 		return this.reportsService.update(id, body);
+	}
+
+	@Roles('admin')
+	@UseGuards(AuthGuard('jwt'), RolesGuard)
+	@Delete(':id')
+	remove(@Param('id') id: string) {
+		return this.reportsService.remove(id);
 	}
 }

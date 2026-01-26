@@ -13,11 +13,16 @@ function LoginPage() {
     setLoading(true);
 
     try {
-      await authService.login({
+      const res = await authService.login({
         email,
         password,
       });
-      navigate("/student");
+      
+      if (res.user?.role === 'admin') {
+        navigate("/admin");
+      } else {
+        navigate("/student");
+      }
     } catch (error) {
       alert(
         error.response?.data?.message || "Login failed"

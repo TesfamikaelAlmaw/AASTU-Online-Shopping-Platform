@@ -49,6 +49,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (user.status === 'suspended') {
+      throw new UnauthorizedException('Your account has been suspended. Please contact the administrator.');
+    }
+
     const payload = { sub: user._id, role: user.role };
     const { password, ...userWithoutPassword } = user.toObject();
 

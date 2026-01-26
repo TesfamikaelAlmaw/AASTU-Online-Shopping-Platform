@@ -22,7 +22,14 @@ export class ReportsService {
 		return this.reportModel
 			.find()
 			.populate('reporter', 'full_name email')
-			.populate('reported_item', 'title price')
+			.populate({
+				path: 'reported_item',
+				select: 'title price owner_id',
+				populate: {
+					path: 'owner_id',
+					select: 'full_name',
+				},
+			})
 			.exec();
 	}
 
@@ -42,5 +49,11 @@ export class ReportsService {
 		});
 		if (!report) throw new NotFoundException('Report not found');
 		return report;
+	}
+
+	async remove(id: string) {
+		const report = await this.reportModel.findByIdAndDelete(id).exec();
+		if (!report) throw new NotFoundException('Report not found');
+		return { message: 'Report deleted successfully' };
 	}
 }
