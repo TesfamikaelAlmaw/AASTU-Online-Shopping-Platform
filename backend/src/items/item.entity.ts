@@ -14,7 +14,7 @@ export class Item {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   owner_id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Category', required: true,default:"other" })
+  @Prop({ type: Types.ObjectId, ref: 'Category', required: true, default: "other" })
   category: Types.ObjectId;
 
   @Prop({ required: true })
@@ -28,6 +28,21 @@ export class Item {
 
   @Prop({ enum: ['available', 'sold', 'removed'], default: 'available' })
   status: 'available' | 'sold' | 'removed';
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
+  likes: Types.ObjectId[];
+
+  @Prop({
+    type: [
+      {
+        user: { type: Types.ObjectId, ref: 'User', required: true },
+        text: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
+  })
+  comments: { user: Types.ObjectId; text: string; createdAt: Date }[];
 }
 
 export const ItemSchema = SchemaFactory.createForClass(Item);

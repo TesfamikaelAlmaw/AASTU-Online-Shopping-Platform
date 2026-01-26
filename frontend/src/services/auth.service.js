@@ -21,7 +21,14 @@ const authService = {
   },
 
   getCurrentUser: () => {
-    return JSON.parse(localStorage.getItem('user'));
+    const user = localStorage.getItem('user');
+    if (!user || user === 'undefined') return null;
+    try {
+      return JSON.parse(user);
+    } catch (e) {
+      console.error("Failed to parse user from localStorage", e);
+      return null;
+    }
   },
 
   getToken: () => {

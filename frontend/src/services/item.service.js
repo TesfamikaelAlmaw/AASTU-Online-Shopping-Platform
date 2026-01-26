@@ -24,6 +24,21 @@ const itemService = {
   deleteItem: async (id) => {
     const response = await api.delete(`/items/${id}`);
     return response.data;
+  },
+
+  likeItem: async (id) => {
+    const response = await api.post(`/items/${id}/like`);
+    return response.data;
+  },
+
+  addComment: async (id, text) => {
+    const response = await api.post(`/items/${id}/comment`, { text });
+    return response.data;
+  },
+
+  deleteComment: async (itemId, commentId) => {
+    const response = await api.delete(`/items/${itemId}/comment/${commentId}`);
+    return response.data;
   }
 };
 

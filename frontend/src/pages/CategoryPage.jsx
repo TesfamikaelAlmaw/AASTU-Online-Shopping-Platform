@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import itemService from "../services/item.service";
 import { Loader2 } from "lucide-react";
 
@@ -62,15 +62,21 @@ function CategoryPage() {
                 key={item._id}
                 className="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition"
               >
-                <h2 className="text-lg font-semibold">{item.title}</h2>
+                <Link to={`/item/${item._id}`}>
+                  <h2 className="text-lg font-semibold hover:text-blue-600 transition">{item.title}</h2>
+                </Link>
                 <div className="flex justify-between items-center mt-1">
                    <p className="text-sm text-gray-500">{item.owner_id?.department || "AASTU"}</p>
                    <p className="text-blue-600 font-bold">${item.price}</p>
                 </div>
                 <p className="text-gray-700 mt-2 text-sm line-clamp-3">{item.description}</p>
                 <div className="mt-4 pt-4 border-t flex justify-between items-center">
-                   <span className="text-xs text-gray-400">Sold by: {item.owner_id?.full_name}</span>
-                   <button className="text-blue-600 text-sm font-semibold hover:underline">View Details</button>
+                   <Link to={`/view-profile/${item.owner_id?._id}`} className="hover:underline">
+                      <span className="text-xs text-gray-400">Sold by: {item.owner_id?.full_name}</span>
+                   </Link>
+                   <Link to={`/item/${item._id}`} className="text-blue-600 text-sm font-semibold hover:underline">
+                      View Details
+                   </Link>
                 </div>
               </div>
             ))
