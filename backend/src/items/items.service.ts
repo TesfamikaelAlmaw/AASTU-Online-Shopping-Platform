@@ -47,7 +47,7 @@ export class ItemsService {
   async findAll() {
     return this.itemModel
       .find()
-      .populate('owner_id', 'full_name email department')
+      .populate('owner_id', 'full_name email department profile_image')
       .populate('category');
   }
 
@@ -60,9 +60,9 @@ export class ItemsService {
 
     const item = await this.itemModel
       .findById(id)
-      .populate('owner_id', 'full_name department')
+      .populate('owner_id', 'full_name department profile_image')
       .populate('category')
-      .populate('comments.user', 'full_name');
+      .populate('comments.user', 'full_name profile_image');
     if (!item) throw new NotFoundException('Item not found');
     return item;
   }

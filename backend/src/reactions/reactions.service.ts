@@ -22,9 +22,9 @@ export class ReactionsService {
 	private async _populateItem(id: string) {
 		return this.itemModel
 			.findById(id)
-			.populate('owner_id', 'full_name department')
+			.populate('owner_id', 'full_name department profile_image')
 			.populate('category')
-			.populate('comments.user', 'full_name');
+			.populate('comments.user', 'full_name profile_image');
 	}
 
 	async toggleLike(itemId: string, userId: string) {
