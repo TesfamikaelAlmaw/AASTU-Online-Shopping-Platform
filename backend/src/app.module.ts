@@ -13,7 +13,7 @@ import { ReactionsModule } from './reactions/reactions.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    MongooseModule.forRoot('mongodb://127.0.0.1:27017/aastu_shop'),
+    MongooseModule.forRoot(process.env.MONGODB_URI as string),
     AuthModule,
     UsersModule,
     ItemsModule,
