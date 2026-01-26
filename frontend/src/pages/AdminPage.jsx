@@ -1,50 +1,53 @@
-import React, { useState } from "react";
-import { Check, X, MoreHorizontal } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Check, X, MoreHorizontal, Loader2 } from "lucide-react";
 import ReportCard from "../components/ReportCard";
+import userService from "../services/user.service";
+import reportService from "../services/report.service";
+import itemService from "../services/item.service";
 
 const AdminPage = () => {
-  const [activeTab, setActiveTab] = useState("User Management"); // Track active tab
+  const [activeTab, setActiveTab] = useState("User Management");
+  const [users, setUsers] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const users = [
-    {
-      name: "Sarah Johnson",
-      email: "sarah.johnson@aastu.edu.et",
-      department: "Computer Science",
-      status: "verified",
-      joinDate: "2024-01-15",
-      itemsPosted: 5,
-    },
-    {
-      name: "Mike Chen",
-      email: "mike.chen@aastu.edu.et",
-      department: "Software Engineering",
-      status: "pending",
-      joinDate: "2024-01-14",
-      itemsPosted: 2,
-    },
-    {
-      name: "Alex Rivera",
-      email: "alex.rivera@aastu.edu.et",
-      department: "Information Systems",
-      status: "verified",
-      joinDate: "2024-01-13",
-      itemsPosted: 8,
-    },
-    {
-      name: "Emma Wilson",
-      email: "emma.wilson@aastu.edu.et",
-      department: "IT",
-      status: "suspended",
-      joinDate: "2024-01-12",
-      itemsPosted: 3,
-    },
-  ];
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [u, r, i] = await Promise.all([
+        userService.getAllUsers(),
+        reportService.getAllReports(),
+        itemService.getAllItems()
+      ]);
+      setUsers(u);
+      setReports(r);
+      setItems(i);
+    } catch (error) {
+      console.error("Failed to fetch admin data", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateUserStatus = async (id, status) => {
+    try {
+      await userService.updateUserStatus(id, { status });
+      fetchData(); // Refresh
+    } catch (error) {
+      alert("Failed to update user status");
+    }
+  };
 
   const stats = [
-    { title: "Total Users", value: "1,234", change: "+12% from last month", icon: "👤" },
-    { title: "Active Items", value: "2,547", change: "+8% from last month", icon: "📦" },
-    { title: "Pending Reports", value: "23", change: "-15% from last month", icon: "🚩" },
-    { title: "Daily Revenue", value: "$1,245", change: "+23% from last month", icon: "📈" },
+    { title: "Total Users", value: users.length, change: "", icon: "👤" },
+    { title: "Active Items", value: items.length, change: "", icon: "📦" },
+    { title: "Pending Reports", value: reports.length, change: "", icon: "🚩" },
+    { title: "Daily Revenue", value: "N/A", change: "", icon: "📈" },
   ];
 
   const statusColors = {
@@ -120,76 +123,99 @@ const AdminPage = () => {
 
       {/* Tab Content */}
       <div className="mt-6">
-        {activeTab === "User Management" && (
-          <Card>
-            <CardContent>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">Recent User Registrations</h2>
-                <MyButton variant="outline">Verify All</MyButton>
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+             <Loader2 className="animate-spin text-blue-500" size={48} />
+          </div>
+        ) : (
+          <>
+            {activeTab === "User Management" && (
+              <Card>
+                <CardContent>
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-semibold">User Management</h2>
+                  </div>
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="text-left border-b">
+                        <th className="py-2">User</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Join Date</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map((user, i) => (
+                        <tr key={i} className="border-b hover:bg-gray-50">
+                          <td className="py-2">
+                            <p className="font-medium">{user.full_name}</p>
+                            <p className="text-xs text-gray-500">{user.email}</p>
+                          </td>
+                          <td>{user.department}</td>
+                          <td>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[user.status] || 'bg-gray-100 text-gray-600'}`}
+                            >
+                              {user.status}
+                            </span>
+                          </td>
+                          <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                          <td className="flex space-x-2">
+                            {user.status === "pending" && (
+                              <>
+                                <button className="text-green-500" onClick={() => handleUpdateUserStatus(user._id, 'verified')}>
+                                  <Check size={16} />
+                                </button>
+                                <button className="text-red-500" onClick={() => handleUpdateUserStatus(user._id, 'suspended')}>
+                                  <X size={16} />
+                                </button>
+                              </>
+                            )}
+                            <button>
+                              <MoreHorizontal size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === "Reports" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {reports.length > 0 ? reports.map((report, idx) => (
+                  <ReportCard 
+                    key={idx}
+                    item={report.item_id} 
+                    reporter={report.reporter_id}
+                    reason={report.reason}
+                    status={report.status}
+                    date={new Date(report.createdAt).toLocaleDateString()}
+                  />
+                )) : (
+                  <p className="text-gray-500">No reports found.</p>
+                )}
               </div>
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="text-left border-b">
-                    <th className="py-2">User</th>
-                    <th>Department</th>
-                    <th>Status</th>
-                    <th>Join Date</th>
-                    <th>Items Posted</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((user, i) => (
-                    <tr key={i} className="border-b hover:bg-gray-50">
-                      <td className="py-2">
-                        <p className="font-medium">{user.name}</p>
-                        <p className="text-xs text-gray-500">{user.email}</p>
-                      </td>
-                      <td>{user.department}</td>
-                      <td>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[user.status]}`}
-                        >
-                          {user.status}
-                        </span>
-                      </td>
-                      <td>{user.joinDate}</td>
-                      <td>{user.itemsPosted}</td>
-                      <td className="flex space-x-2">
-                        {user.status === "pending" && (
-                          <>
-                            <button className="text-green-500">
-                              <Check size={16} />
-                            </button>
-                            <button className="text-red-500">
-                              <X size={16} />
-                            </button>
-                          </>
-                        )}
-                        <button>
-                          <MoreHorizontal size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
-        )}
+            )}
 
-        {activeTab === "Reports" && <ReportCard />}
-
-        {activeTab === "Item Management" && (
-          <div>
-            <p className="text-gray-500">Item Management content goes here...</p>
-          </div>
-        )}
-
-        {activeTab === "Analytics" && (
-          <div>
-            <p className="text-gray-500">Analytics content goes here...</p>
-          </div>
+            {activeTab === "Item Management" && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {items.map((item, idx) => (
+                   <Card key={idx}>
+                      <CardContent>
+                         <h3 className="font-bold">{item.title}</h3>
+                         <p className="text-sm text-gray-600">{item.description}</p>
+                         <p className="text-blue-600 font-bold">${item.price}</p>
+                         <p className="text-xs text-gray-400">Seller: {item.owner_id?.full_name}</p>
+                      </CardContent>
+                   </Card>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
