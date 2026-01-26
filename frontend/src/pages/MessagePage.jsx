@@ -26,7 +26,7 @@ function MessagePage() {
         {chats.map((chat) => (
           <Link
             key={chat.id}
-            to={`/contact-seller/${chat.id}`}
+            to={`/contact-seller`}
             className="flex items-center p-4 hover:bg-gray-100 transition"
           >
             <img

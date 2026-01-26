@@ -12,7 +12,7 @@ function LoginPage() {
     console.log("Login submitted:", { email, password });
     alert("Login submitted! (Check console for data)");
     // After successful login, redirect to dashboard
-    navigate("/student-marketplace");
+    navigate("/student");
   };
 
   return (
