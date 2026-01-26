@@ -81,29 +81,4 @@ export class ItemsController {
     }
     return this.itemsService.remove(id);
   }
-
-  // Like Toggle
-  @UseGuards(AuthGuard('jwt'))
-  @Post(':id/like')
-  async toggleLike(@Req() req, @Param('id') id: string) {
-    return this.itemsService.toggleLike(id, req.user.userId);
-  }
-
-  // Add Comment
-  @UseGuards(AuthGuard('jwt'))
-  @Post(':id/comment')
-  async addComment(@Req() req, @Param('id') id: string, @Body('text') text: string) {
-    return this.itemsService.addComment(id, req.user.userId, text);
-  }
-
-  // Delete Comment
-  @UseGuards(AuthGuard('jwt'))
-  @Delete(':id/comment/:commentId')
-  async deleteComment(
-    @Req() req,
-    @Param('id') id: string,
-    @Param('commentId') commentId: string
-  ) {
-    return this.itemsService.deleteComment(id, commentId, req.user.userId);
-  }
 }

@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import itemService from "../services/item.service";
 import authService from "../services/auth.service";
 import reportService from "../services/report.service";
+import reactionService from "../services/reaction.service";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { 
@@ -69,7 +70,7 @@ function ItemDetailPage() {
   const handleLike = async () => {
     if (!currentUser) return alert("Please login to like items");
     try {
-      const updatedItem = await itemService.likeItem(itemId);
+      const updatedItem = await reactionService.likeItem(itemId);
       setItem(updatedItem);
     } catch (err) {
       console.error("Failed to like item", err);
@@ -83,7 +84,7 @@ function ItemDetailPage() {
 
     setSubmittingComment(true);
     try {
-      const updatedItem = await itemService.addComment(itemId, commentText);
+      const updatedItem = await reactionService.addComment(itemId, commentText);
       setItem(updatedItem);
       setCommentText("");
     } catch (err) {
@@ -96,7 +97,7 @@ function ItemDetailPage() {
   const handleDeleteComment = async (commentId) => {
     if (!window.confirm("Delete this comment?")) return;
     try {
-      const updatedItem = await itemService.deleteComment(itemId, commentId);
+      const updatedItem = await reactionService.deleteComment(itemId, commentId);
       setItem(updatedItem);
     } catch (err) {
       alert("Failed to delete comment");
@@ -191,12 +192,14 @@ function ItemDetailPage() {
           >
             <ChevronLeft size={20} /> Back to Marketplace
           </Link>
-          <button 
-            onClick={() => setShowReportModal(true)}
-            className="flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-red-500 transition uppercase tracking-widest"
-          >
-            <AlertTriangle size={14} /> Report Item
-          </button>
+          {!isOwner && (
+            <button 
+              onClick={() => setShowReportModal(true)}
+              className="flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-red-500 transition uppercase tracking-widest"
+            >
+              <AlertTriangle size={14} /> Report Item
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 bg-white rounded-3xl shadow-sm overflow-hidden p-6 md:p-12 mb-10 border border-gray-100">
@@ -346,6 +349,17 @@ function ItemDetailPage() {
                       >
                         <MessageCircle size={22} /> Contact Seller
                       </Link>
+                      <button 
+                        onClick={handleLike}
+                        className={`flex items-center justify-center gap-2 px-8 rounded-2xl font-black transition shadow-lg ${
+                          isLiked 
+                          ? 'bg-red-50 text-red-600 border border-red-100 shadow-red-50' 
+                          : 'bg-white text-gray-600 border border-gray-100 hover:bg-red-50 hover:text-red-500 hover:border-red-100'
+                        }`}
+                      >
+                        <Heart size={22} fill={isLiked ? "currentColor" : "none"} />
+                        {item.likes?.length || 0}
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -393,12 +407,14 @@ function ItemDetailPage() {
             {item.comments && item.comments.length > 0 ? (
               item.comments.map((comment) => (
                 <div key={comment._id} className="flex gap-5 group">
-                  <div className="w-12 h-12 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400">
+                  <Link to={`/view-profile/${getID(comment.user)}`} className="w-12 h-12 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400 hover:bg-blue-100 hover:text-blue-500 transition-colors">
                     <UserIcon size={24} />
-                  </div>
+                  </Link>
                   <div className="flex-1">
                     <div className="flex justify-between items-start mb-1">
-                      <h4 className="font-black text-gray-900">{comment.user?.full_name || "Deleted User"}</h4>
+                      <Link to={`/view-profile/${getID(comment.user)}`} className="hover:text-blue-600 transition-colors">
+                        <h4 className="font-black text-gray-900">{comment.user?.full_name || "Deleted User"}</h4>
+                      </Link>
                       <div className="flex items-center gap-3">
                         <span className="text-[10px] uppercase font-black text-gray-400">
                           {new Date(comment.createdAt).toLocaleDateString()}
