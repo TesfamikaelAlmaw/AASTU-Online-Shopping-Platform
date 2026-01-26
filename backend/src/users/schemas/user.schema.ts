@@ -22,6 +22,9 @@ export class User {
 
   @Prop({ default: 'active' })
   status: 'active' | 'suspended';
+
+  @Prop()
+  profile_image: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

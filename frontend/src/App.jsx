@@ -12,6 +12,7 @@ import NotificationPage from "./pages/NotificationPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ItemDetailPage from "./pages/ItemDetailPage";
+import SettingsPage from "./pages/SettingsPage";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
           <Route path="/messages" element={<MessagePage />} />
           <Route path="/notifications" element={<NotificationPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/login" element={<LoginPage />} />
         </Routes>
       </Router>

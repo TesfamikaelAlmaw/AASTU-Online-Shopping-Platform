@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import userService from "../services/user.service";
 import itemService from "../services/item.service";
-import { Loader2, MessageCircle, ShoppingBag, Calendar, Mail } from "lucide-react";
+import authService from "../services/auth.service";
+import { Loader2, MessageCircle, ShoppingBag, Calendar, Mail, Settings, Edit } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
@@ -11,6 +12,9 @@ function ViewProfilePage() {
   const [seller, setSeller] = useState(null);
   const [sellerPosts, setSellerPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const currentUser = authService.getCurrentUser();
+  const isOwnProfile = currentUser && (currentUser._id === sellerId || currentUser.id === sellerId);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -41,7 +45,15 @@ function ViewProfilePage() {
   }, [sellerId]);
 
   if (loading) {
-     return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin" size={48} /></div>;
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="animate-spin text-blue-500" size={48} />
+        </div>
+        <Footer />
+      </div>
+    );
   }
 
   if (!seller) {
@@ -55,8 +67,12 @@ function ViewProfilePage() {
       <div className="flex-1 flex flex-col items-center p-6 md:p-10">
         {/* Seller Profile Header */}
         <div className="bg-white rounded-3xl shadow-sm border p-8 w-full max-w-4xl flex flex-col md:flex-row items-center md:items-start gap-8 mb-10">
-          <div className="w-40 h-40 rounded-full bg-blue-100 flex items-center justify-center text-5xl font-bold text-blue-600 shadow-inner">
-             {seller.full_name?.charAt(0) || "U"}
+          <div className="w-40 h-40 rounded-full bg-blue-100 flex items-center justify-center text-5xl font-bold text-blue-600 shadow-inner overflow-hidden border-4 border-white">
+             {seller.profile_image ? (
+               <img src={seller.profile_image} className="w-full h-full object-cover" alt={seller.full_name} />
+             ) : (
+               seller.full_name?.charAt(0) || "U"
+             )}
           </div>
           
           <div className="flex-1 flex flex-col text-center md:text-left">
@@ -76,12 +92,21 @@ function ViewProfilePage() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <Link 
-                to="/contact-seller"
-                className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg shadow-green-100"
-              >
-                <MessageCircle size={20} /> Chat with Seller
-              </Link>
+              {isOwnProfile ? (
+                 <Link 
+                  to="/settings"
+                  className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg shadow-blue-100"
+                >
+                  <Settings size={20} /> Edit Account
+                </Link>
+              ) : (
+                <Link 
+                  to="/contact-seller"
+                  className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg shadow-green-100"
+                >
+                  <MessageCircle size={20} /> Chat with Seller
+                </Link>
+              )}
               <button className="inline-flex items-center justify-center gap-2 border-2 border-gray-200 hover:border-blue-500 hover:text-blue-600 px-8 py-3 rounded-xl font-bold transition">
                 Share Profile
               </button>
