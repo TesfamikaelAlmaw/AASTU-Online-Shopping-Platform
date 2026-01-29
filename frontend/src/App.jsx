@@ -26,7 +26,7 @@ function App() {
           {/* student page  */}
           <Route path="/student" element={<StudentPage />} />
           <Route path="/category" element={<CategoryPage />} />
-          <Route path="/contact-seller" element={<ContactSeller />} />
+          <Route path="/contact-seller/:sellerId" element={<ContactSeller />} />
           <Route path="/view-profile/:sellerId" element={<ViewProfilePage />} />
           <Route path="/sell_item" element={<SellItemPage />} />
           <Route path="/item/:itemId" element={<ItemDetailPage />} />

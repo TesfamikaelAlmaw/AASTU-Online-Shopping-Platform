@@ -7,11 +7,16 @@ const streamifier = require('streamifier');
 export class CloudinaryService {
 	uploadFile(file: Express.Multer.File): Promise<CloudinaryResponse> {
 		return new Promise((resolve, reject) => {
-			const upload = cloudinary.uploader.upload_stream((error, result) => {
+			const upload = cloudinary.uploader.upload_stream(
+				{
+					resource_type: 'auto',
+				},
+				(error, result) => {
 				if (error) return reject(error);
 				if (!result) return reject(new Error('Cloudinary upload result is undefined'));
 				resolve(result);
-			});
+				},
+			);
 
 			streamifier.createReadStream(file.buffer).pipe(upload);
 		});

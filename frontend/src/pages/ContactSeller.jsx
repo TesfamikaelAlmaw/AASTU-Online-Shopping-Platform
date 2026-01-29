@@ -1,91 +1,63 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import MessagePage from "./MessagePage";
+import chatService from "../services/chat.service";
+import authService from "../services/auth.service";
 
 function ContactSeller() {
-  const [message, setMessage] = useState("");
-  const [chat, setChat] = useState([
-    { from: "seller", text: "Hello! This book is still available." },
-    { from: "buyer", text: "Great! Can you tell me the condition?" },
-    { from: "seller", text: "It’s in excellent condition, almost new." },
-  ]);
+  const { sellerId } = useParams();
+  const currentUser = authService.getCurrentUser();
+  const [chatId, setChatId] = useState(null);
+  const initializedRef = useRef(false);
 
-  const handleSend = (e) => {
-    e.preventDefault();
-    if (message.trim() === "") return;
-    setChat([...chat, { from: "buyer", text: message }]);
-    setMessage("");
-  };
+  useEffect(() => {
+    if (!sellerId || !currentUser || initializedRef.current) return;
+    initializedRef.current = true;
 
-  // Fake seller profile
-  const seller = {
-    name: "John Doe",
-    email: "johndoe@university.edu",
-    department: "Computer Science",
-    avatar: "https://i.pravatar.cc/150?img=3",
-  };
+    chatService.getChats().then((existingChats) => {
+      const existing = existingChats.find((chat) =>
+        chat.participants?.some((user) => user._id === sellerId),
+      );
 
-  return (
-    <div className="flex w-full h-screen p-6 bg-gray-50 gap-6">
-      {/* Left: Seller Profile */}
-      <div className="w-1/4 bg-white p-4 rounded-lg shadow flex flex-col items-center">
-        <img
-          src={seller.avatar}
-          alt="Seller Avatar"
-          className="w-24 h-24 rounded-full mb-4"
-        />
-        <h2 className="text-lg font-bold">{seller.name}</h2>
-        <p className="text-gray-600">{seller.department}</p>
-        <p className="text-gray-500 text-sm">{seller.email}</p>
-        <span className="mt-4 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
-          Online
-        </span>
-      </div>
+      if (existing) {
+        setChatId(existing._id);
+        return;
+      }
 
-      {/* Right: Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="text-xl font-bold mb-4">Chat with Seller</div>
+      chatService.createChat(sellerId).then((chat) => {
+        setChatId(chat._id);
+      });
+    });
+  }, [sellerId, currentUser]);
 
-        {/* Chat box */}
-        <div className="flex-1 overflow-y-auto border rounded-lg p-4 bg-white shadow-sm">
-          {chat.map((msg, index) => (
-            <div
-              key={index}
-              className={`mb-2 flex ${
-                msg.from === "buyer" ? "justify-end" : "justify-start"
-              }`}
-            >
-              <span
-                className={`px-3 py-2 rounded-2xl text-sm ${
-                  msg.from === "buyer"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-800"
-                }`}
-              >
-                {msg.text}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* Input box */}
-        <form onSubmit={handleSend} className="mt-4 flex gap-2">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="bg-white rounded-xl shadow p-6 text-center">
+          <h2 className="text-xl font-semibold mb-2">Login required</h2>
+          <p className="text-gray-500 mb-4">
+            Please sign in to chat with the seller.
+          </p>
+          <Link
+            to="/login"
+            className="text-blue-600 font-semibold hover:underline"
           >
-            Send
-          </button>
-        </form>
+            Go to Login
+          </Link>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (!chatId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">Starting chat...</div>
+      </div>
+    );
+  }
+
+  return <MessagePage initialChatId={chatId} />;
 }
 
 export default ContactSeller;
