@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import {
   Paperclip,
   Send,
@@ -16,7 +15,6 @@ const REACTIONS = ["👍", "❤️", "😂", "🎉", "😮", "😢"];
 
 function MessagePage({ initialChatId = null }) {
   const currentUser = authService.getCurrentUser();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [chats, setChats] = useState([]);
   const [selectedChatId, setSelectedChatId] = useState(null);
   const [messagesByChat, setMessagesByChat] = useState({});
@@ -40,8 +38,6 @@ function MessagePage({ initialChatId = null }) {
   const lastChatStorageKey = currentUser?._id
     ? `lastChatId:${currentUser._id}`
     : "lastChatId";
-
-  const urlChatId = searchParams.get("chatId");
 
   const getInitials = (name) => {
     if (!name) return "U";
@@ -130,44 +126,36 @@ function MessagePage({ initialChatId = null }) {
     if (initialChatId) {
       setSelectedChatId(initialChatId);
       localStorage.setItem(lastChatStorageKey, initialChatId);
-      setSearchParams({ chatId: initialChatId });
-      return;
-    }
-
-    if (urlChatId) {
-      setSelectedChatId(urlChatId);
-      localStorage.setItem(lastChatStorageKey, urlChatId);
       return;
     }
 
     const savedChatId = localStorage.getItem(lastChatStorageKey);
     if (savedChatId) {
       setSelectedChatId(savedChatId);
-      setSearchParams({ chatId: savedChatId });
     }
-  }, [initialChatId, lastChatStorageKey, urlChatId, setSearchParams]);
+  }, [initialChatId, lastChatStorageKey]);
 
   useEffect(() => {
     chatService.getChats().then((data) => {
       setChats(data);
       setHasLoadedChats(true);
 
-      if (initialChatId || selectedChatId) {
+      if (initialChatId) {
         return;
       }
 
       const savedChatId = localStorage.getItem(lastChatStorageKey);
-      if (savedChatId) {
+      if (savedChatId && data.some((chat) => chat._id === savedChatId)) {
         setSelectedChatId(savedChatId);
         return;
       }
 
       if (data.length > 0) {
-        setSelectedChatId(data[0]._id);
+        setSelectedChatId((prev) => prev || data[0]._id);
         localStorage.setItem(lastChatStorageKey, data[0]._id);
       }
     });
-  }, [initialChatId, lastChatStorageKey, selectedChatId]);
+  }, [initialChatId, lastChatStorageKey]);
 
   useEffect(() => {
     selectedChatIdRef.current = selectedChatId;
@@ -331,7 +319,6 @@ function MessagePage({ initialChatId = null }) {
   const handleSelectChat = (chatId) => {
     setSelectedChatId(chatId);
     localStorage.setItem(lastChatStorageKey, chatId);
-    setSearchParams({ chatId });
     setReplyTo(null);
   };
 
