@@ -10,6 +10,7 @@ import SellItemPage from "./pages/SellItemPage";
 import MessagePage from "./pages/MessagePage";
 import NotificationPage from "./pages/NotificationPage";
 import LoginPage from "./pages/LoginPage";
+import AdminLoginPage from "./pages/AdminLoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ItemDetailPage from "./pages/ItemDetailPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -21,6 +22,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin/login" element={<AdminLoginPage />} />
           {/* student page  */}
           <Route path="/student" element={<StudentPage />} />
           <Route path="/category" element={<CategoryPage />} />
